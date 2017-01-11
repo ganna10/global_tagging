@@ -38,6 +38,7 @@ p <- p + theme(axis.title = element_blank())
 p <- p + theme(axis.text = element_blank())
 p <- p + theme(axis.ticks = element_blank())
 p <- p + theme(panel.spacing = unit(5, "mm"))
+p <- p + guides(fill = guide_colourbar(barwidth = 12))
 p
 
 CairoPDF(file = "Global_column_O3_each_month.pdf", width = 20, height = 14)

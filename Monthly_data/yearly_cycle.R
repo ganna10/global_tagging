@@ -18,12 +18,12 @@ p <- p + plot_theme()
 p <- p + ylab("Mixing Ratio (ppbv)")
 p <- p + theme(axis.title.x = element_blank())
 p <- p + theme(axis.text.x = element_text(angle = 45, hjust = 0.8))
-p <- p + ggtitle("Yearly Cycle of Ozone")
+p <- p + ggtitle("Yearly Cycle of Ozone in different Receptor Regions")
 p
-
-CairoPDF(file = "O3_Yearly_cycle.pdf", width = 10, height = 7)
-print(p)
-dev.off()
+# 
+# CairoPDF(file = "O3_Yearly_cycle.pdf", width = 10, height = 7)
+# print(p)
+# dev.off()
 
 # tagged less non-tagged
 non.tagged <- zonal.mean %>% 
@@ -101,7 +101,7 @@ p <- p + facet_wrap(~ Region, nrow = 1)
 p <- p + plot_theme()
 p <- p + ylab("O3 Mixing Ratio (ppbv)")
 p <- p + theme(axis.title.x = element_blank())
-p <- p + ggtitle("Yearly Cycle of Total Ozone Mixing Ratios and from NOx Sources")
+p <- p + ggtitle("Yearly Cycle of Ozone Mixing Ratios and from NOx Sources in Receptor Regions")
 p <- p + scale_colour_manual(values = colours, limits = levels(factor(with.sources$Source)))
 p <- p + scale_y_continuous(limits = c(0, 65))
 p <- p + theme(legend.title = element_blank())
@@ -129,7 +129,7 @@ p1 <- p1 + scale_x_discrete(labels = c("J", "F", "M", "A", "M", "J", "J", "A", "
 p1 <- p1 + scale_fill_manual(values = colours, limits = levels(factor(contributions$Source)))
 p1 <- p1 + ylab("Percent Contribution to Total O3")
 p1 <- p1 + theme(axis.title.x = element_blank())
-p1 <- p1 + ggtitle("Yearly Cycle of Percent Contributions of NOx Sources to Total Ozone")
+p1 <- p1 + ggtitle("Yearly Cycle of Percent Contributions of NOx Sources to Total Ozone in Receptor Regions")
 p1 <- p1 + theme(legend.title = element_blank())
 p1
 
@@ -210,7 +210,7 @@ p3 <- p3 + scale_fill_manual(values = type.colours, labels = c("Biogenic", "Biom
 p3 <- p3 + scale_y_continuous(limits = c(0, 1.01), label = percent, expand = c(0, 0))
 p3 <- p3 + ylab("Percent Contributions of NOx Sources to Local and Transported O3")
 p3 <- p3 + theme(axis.title.x = element_blank())
-p3 <- p3 + ggtitle("Yearly Cycle of Percent Contributions of NOx Sources to Local and Transported Ozone")
+p3 <- p3 + ggtitle("Yearly Cycle of Percent Contributions of NOx Sources to Local and Transported Ozone in Receptor Regions")
 p3 <- p3 + theme(legend.title = element_blank())
 p3
 
@@ -265,7 +265,7 @@ country.colours = c("Total" = "#000000", "North.America" = "#a6cee3", "Europe" =
 p4 <- ggplot(data = transport, aes(x = Month, y = Mixing.Ratio, colour = Source, group = Source))
 p4 <- p4 + geom_point()
 p4 <- p4 + geom_path()
-p4 <- p4 + facet_wrap(~ Region, nrow = 2, scales = "free_y")
+p4 <- p4 + facet_wrap(~ Region, nrow = 1)
 p4 <- p4 + plot_theme()
 p4 <- p4 + theme(legend.title = element_blank())
 p4 <- p4 + theme(axis.title.x = element_blank())
@@ -290,12 +290,12 @@ transported.contributions$Source <- factor(transported.contributions$Source, lev
 
 p5 <- ggplot(data = transported.contributions, aes(x = Month, y = Contribution, fill = Source))
 p5 <- p5 + geom_bar(stat = "identity")
-p5 <- p5 + facet_wrap( ~ Region, nrow = 2)
+p5 <- p5 + facet_wrap( ~ Region, nrow = 1)
 p5 <- p5 + plot_theme()
 p5 <- p5 + scale_x_discrete(labels = c("J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"), expand = c(0, 0))
 p5 <- p5 + scale_fill_manual(values = country.colours, labels = c("Rest", "Ocean", "East Asia", "South Asia", "Russia", "Middle East", "Europe", "North America"))
 p5 <- p5 + scale_y_continuous(limits = c(0, 1.01), label = percent, expand = c(0, 0))
-p5 <- p5 + ylab("Percent Contributions of NOx Sources to Transported O3")
+p5 <- p5 + ylab("Percent Contributions of NOx Sources to Transported O3 in Receptor Regions")
 p5 <- p5 + theme(axis.title.x = element_blank())
 p5 <- p5 + ggtitle("Yearly Cycle of Percent Contributions of Transported NOx Sources in Receptor Regions")
 p5 <- p5 + theme(legend.title = element_blank())
@@ -303,4 +303,8 @@ p5
 
 CairoPDF(file = "Yearly_Transported_O3_from_countries_to_Receptors_contributions.pdf", width = 13, height = 7)
 print(p5)
+dev.off()
+
+CairoPDF(file = "Yearly_Transported_O3_from_Countries_Total_plus_Contributions.pdf", width = 13, height = 7)
+print(grid.draw(rbind(ggplotGrob(p4), ggplotGrob(p5), size = "last")))
 dev.off()

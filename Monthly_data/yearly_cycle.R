@@ -70,9 +70,9 @@ get.source <- function (species, Region) {
     
   if (species == "O3") { # total ozone
     source.emiss = "Total"
-  } else if (str_detect(species, 'LGT') | str_detect(species, 'STR')) { # natural emissions: lightning and stratosphere
-    source.emiss = "Natural"
-  } else if (str_detect(species, 'INI') | str_detect(species, 'AIR') | str_detect(species, 'XTR')) { # other sources: aircraft, initial conditions and chemical source
+  } else if (str_detect(species, 'STR')) { # stratosphere
+    source.emiss = "Stratosphere"
+  } else if (str_detect(species, 'LGT') | str_detect(species, 'INI') | str_detect(species, 'AIR') | str_detect(species, 'XTR')) { # other sources: aircraft, lightning, initial conditions and chemical source
     source.emiss = "Other"
   } else if (str_detect(species, match.Region)) { # check for local or transported emissions
     source.emiss = "Local"
@@ -91,21 +91,22 @@ with.sources <- zonal.mean %>%
   summarise(Zonal.Mean = sum(Zonal.Mean))
 with.sources
 
-with.sources$Source <- factor(with.sources$Source, levels = c("Total", "Local", "Transported", "Natural", "Other"))
-colours <- c("Total" = "#000000", "Local" = "#377eb8", "Natural" = "#4daf4a", "Transported" = "#984ea3", "Other" = "#ff7f00")
+with.sources$Source <- factor(with.sources$Source, levels = c("Total", "Local", "Transported", "Stratosphere", "Other"))
+colours <- c("Total" = "#000000", "Local" = "#377eb8", "Stratosphere" = "#4daf4a", "Transported" = "#984ea3", "Other" = "#ff7f00")
 
 p <- ggplot(data = with.sources, aes(x = Month, y = Zonal.Mean, colour = Source, group = Source))
 p <- p + geom_point()
 p <- p + geom_path()
 p <- p + facet_wrap(~ Region, nrow = 1)
 p <- p + plot_theme()
-p <- p + ylab("O3 Mixing Ratio (ppbv)")
-p <- p + theme(axis.title.x = element_blank())
-p <- p + ggtitle("Yearly Cycle of Ozone Mixing Ratios and from NOx Sources in Receptor Regions")
+p <- p + ylab("O3 MDA8 (ppbv)")
+p <- p + theme(axis.title = element_blank())
+p <- p + ggtitle("Monthly Average of O3 MDA8 for Emissions and Meteorology for Year 2010", subtitle = "\nTotal Ozone MDA8 (ppbv) and MDA8 from NOx Sources in Receptor Regions")
 p <- p + scale_colour_manual(values = colours, limits = levels(factor(with.sources$Source)))
 p <- p + scale_y_continuous(limits = c(0, 65))
 p <- p + theme(legend.title = element_blank())
 p <- p + scale_x_discrete(labels = c("J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"))
+p <- p + theme(plot.subtitle = element_text(face = "bold", size = 12))
 p
 
 CairoPDF(file = "O3_yearly_cycle_sources.pdf", width = 10, height = 7)
@@ -118,7 +119,7 @@ contributions <- with.sources %>%
   gather(Source, Mixing.Ratio, -Month, -Region, -Total) %>%
   mutate(Contribution = Mixing.Ratio / Total) 
 
-contributions$Source <- factor(contributions$Source, levels = c("Other", "Natural", "Transported", "Local"))
+contributions$Source <- factor(contributions$Source, levels = c("Other", "Stratosphere", "Transported", "Local"))
 
 p1 <- ggplot(data = contributions %>% arrange(Source), aes(x = Month, y = Contribution, fill = Source))
 p1 <- p1 + geom_bar(stat = "identity")
@@ -128,21 +129,115 @@ p1 <- p1 + scale_y_continuous(limits = c(0, 1), label = percent, expand = c(0, 0
 p1 <- p1 + scale_x_discrete(labels = c("J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"), expand = c(0, 0))
 p1 <- p1 + scale_fill_manual(values = colours, limits = levels(factor(contributions$Source)))
 p1 <- p1 + ylab("Percent Contribution to Total O3")
-p1 <- p1 + theme(axis.title.x = element_blank())
-p1 <- p1 + ggtitle("Yearly Cycle of Percent Contributions of NOx Sources to Total Ozone in Receptor Regions")
+p1 <- p1 + theme(axis.title = element_blank())
+p1 <- p1 + ggtitle("Percent Contributions of NOx Sources to Total Ozone in Receptor Regions")
 p1 <- p1 + theme(legend.title = element_blank())
+p1 <- p1 + theme(plot.title = element_text(size = 12))
 p1
 
 CairoPDF(file = "O3_Yearly_Cycle_Percent_Contributions.pdf", width = 10, height = 7)
 print(p1)
 dev.off()
 
-# grid.arrange(p, p1, nrow = 2) # doesn't align y-axes
-grid.newpage()
-grid.draw(rbind(ggplotGrob(p), ggplotGrob(p1), size = "last"))
+# transport from which regions influence local ozone
+get.emission.source <- function (Species) {
+  if (str_detect(Species, 'EAS')) {
+    Source = "East.Asia" 
+  } else if (str_detect(Species, 'EUR')) {
+    Source = "Europe"
+  } else if (str_detect(Species, 'NAM')) {
+    Source = "North.America"
+  } else if (str_detect(Species, 'MDE')) {
+    Source = "Middle.East"
+  } else if (str_detect(Species, 'RBU')) {
+    Source = "Russia"
+  } else if (str_detect(Species, 'SAS')) {
+    Source = "South.Asia"
+  } else if (str_detect(Species, 'OCN')) {
+    Source = "Ocean"
+  } else if (str_detect(Species, 'RST')) {
+    Source = "Rest"
+  } else {
+    Source = "Error"
+  }
+  return (Source)
+}
 
-CairoPDF(file = "O3_Yearly_Cycle_Total_plus_Contributions.pdf", width = 13, height = 7)
-print(grid.draw(rbind(ggplotGrob(p), ggplotGrob(p1), size = "last")))
+transport <- zonal.mean %>%
+  rowwise() %>%
+  mutate(Source = get.source(Species, Region)) %>%
+  filter(Source == "Transported") %>%
+  dplyr::select(-Source) %>%
+  rowwise() %>%
+  mutate(Source = get.emission.source(Species)) %>%
+  group_by(Month, Region, Source) %>%
+  summarise(Mixing.Ratio = sum(Zonal.Mean)) %>%
+  spread(Source, Mixing.Ratio)
+transport[is.na(transport)] <- 0
+transport <- transport %>%
+  mutate(Total = North.America + Europe + Middle.East + Russia + South.Asia + East.Asia + Ocean + Rest) %>%
+  gather(Source, Mixing.Ratio, -Month, -Region)
+transport
+
+transport$Source <- factor(transport$Source, levels = c("Total", "North.America", "Europe", "Middle.East", "Russia", "South.Asia", "East.Asia", "Ocean", "Rest"))
+
+country.colours = c("Total" = "#000000", "North.America" = "#a6cee3", "Europe" = "#b2df8a", "Middle.East" = "#ff7f00", "Russia" = "#e31a1c", "South.Asia" = "#6a3d9a", "East.Asia" = "#1f78b4", "Ocean" = "#cab2d6", "Rest" = "#33a02c")
+
+p4 <- ggplot(data = transport, aes(x = Month, y = Mixing.Ratio, colour = Source, group = Source))
+p4 <- p4 + geom_point()
+p4 <- p4 + geom_path()
+p4 <- p4 + facet_wrap(~ Region, nrow = 1)
+p4 <- p4 + plot_theme()
+p4 <- p4 + theme(legend.title = element_blank())
+p4 <- p4 + theme(axis.title.x = element_blank())
+p4 <- p4 + ylab("O3 MDA8 (ppbv)")
+p4 <- p4 + ggtitle("O3 Mixing Ratios of Transported Sources in Receptor Regions")
+p4 <- p4 + scale_x_discrete(labels = c("J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"))
+p4 <- p4 + scale_colour_manual(values = country.colours, labels = c("Total", "North America", "Europe", "Middle East", "Russia", "South Asia", "East Asia", "Ocean", "Rest"))
+p4
+
+CairoPDF(file = "Yearly_Transported_O3_from_countries_to_Receptors.pdf", width = 13, height = 7)
+print(p4)
+dev.off()
+
+transported.contributions <- transport %>%
+  spread(Source, Mixing.Ratio) %>%
+  gather(Source, Mixing.Ratio, -Month, -Region, -Total) %>%
+  mutate(Contribution = Mixing.Ratio / Total) %>%
+  filter(Mixing.Ratio != 0)
+transported.contributions
+
+transported.contributions$Source <- factor(transported.contributions$Source, levels = c("Rest", "Ocean", "East.Asia", "South.Asia", "Russia", "Middle.East", "Europe", "North.America"))
+
+p5 <- ggplot(data = transported.contributions, aes(x = Month, y = Contribution, fill = Source))
+p5 <- p5 + geom_bar(stat = "identity")
+p5 <- p5 + facet_wrap( ~ Region, nrow = 1)
+p5 <- p5 + plot_theme()
+p5 <- p5 + scale_x_discrete(labels = c("J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"), expand = c(0, 0))
+# p5 <- p5 + scale_fill_manual(values = country.colours, labels = c("Rest", "Ocean", "East Asia", "South Asia", "Russia", "Middle East", "Europe", "North America"))
+p5 <- p5 + scale_fill_brewer(palette = "Dark2", labels = c("Rest", "Ocean", "East Asia", "South Asia", "Russia", "Middle East", "Europe", "North America"))
+p5 <- p5 + scale_y_continuous(limits = c(0, 1.01), label = percent, expand = c(0, 0))
+# p5 <- p5 + ylab("Percent Contributions of Country\nNOx Sources to Transported O3")
+p5 <- p5 + theme(axis.title = element_blank())
+p5 <- p5 + ggtitle("Percent Contributions of Transported NOx Sources from Source Regions to Receptor Regions")
+p5 <- p5 + theme(legend.title = element_blank())
+p5 <- p5 + theme(plot.title = element_text(size = 12))
+p5
+
+CairoPDF(file = "Yearly_Transported_O3_from_countries_to_Receptors_contributions.pdf", width = 13, height = 7)
+print(p5)
+dev.off()
+
+CairoPDF(file = "Yearly_Transported_O3_from_Countries_Total_plus_Contributions.pdf", width = 13, height = 7)
+print(grid.draw(rbind(ggplotGrob(p4), ggplotGrob(p5), size = "last")))
+dev.off()
+
+# grid.arrange(p, p1, nrow = 2) # doesn't align y-axes
+# grid.newpage()
+# grid.draw(rbind(ggplotGrob(p), ggplotGrob(p1), size = "last"))
+
+CairoPDF(file = "O3_Yearly_Cycle_Total_plus_Contributions_plus_Country.pdf", width = 13, height = 9)
+print(grid.draw(rbind(ggplotGrob(p), ggplotGrob(p1), ggplotGrob(p5), size = "last")))
 dev.off()
 
 get.data.type <- function (Species) {
@@ -216,95 +311,4 @@ p3
 
 CairoPDF(file = "Local_Transported_O3_Contributions_in_Year.pdf", width = 13, height = 7)
 print(p3)
-dev.off()
-
-# transport from which regions influence local ozone
-get.emission.source <- function (Species) {
-  if (str_detect(Species, 'EAS')) {
-    Source = "East.Asia" 
-  } else if (str_detect(Species, 'EUR')) {
-    Source = "Europe"
-  } else if (str_detect(Species, 'NAM')) {
-    Source = "North.America"
-  } else if (str_detect(Species, 'MDE')) {
-    Source = "Middle.East"
-  } else if (str_detect(Species, 'RBU')) {
-    Source = "Russia"
-  } else if (str_detect(Species, 'SAS')) {
-    Source = "South.Asia"
-  } else if (str_detect(Species, 'OCN')) {
-    Source = "Ocean"
-  } else if (str_detect(Species, 'RST')) {
-    Source = "Rest"
-  } else {
-    Source = "Error"
-  }
-  return (Source)
-}
-
-transport <- zonal.mean %>%
-  rowwise() %>%
-  mutate(Source = get.source(Species, Region)) %>%
-  filter(Source == "Transported") %>%
-  dplyr::select(-Source) %>%
-  rowwise() %>%
-  mutate(Source = get.emission.source(Species)) %>%
-  group_by(Month, Region, Source) %>%
-  summarise(Mixing.Ratio = sum(Zonal.Mean)) %>%
-  spread(Source, Mixing.Ratio)
-transport[is.na(transport)] <- 0
-transport <- transport %>%
-  mutate(Total = North.America + Europe + Middle.East + Russia + South.Asia + East.Asia + Ocean + Rest) %>%
-  gather(Source, Mixing.Ratio, -Month, -Region)
-transport
-
-transport$Source <- factor(transport$Source, levels = c("Total", "North.America", "Europe", "Middle.East", "Russia", "South.Asia", "East.Asia", "Ocean", "Rest"))
-
-country.colours = c("Total" = "#000000", "North.America" = "#a6cee3", "Europe" = "#b2df8a", "Middle.East" = "#ff7f00", "Russia" = "#e31a1c", "South.Asia" = "#6a3d9a", "East.Asia" = "#1f78b4", "Ocean" = "#cab2d6", "Rest" = "#33a02c")
-
-p4 <- ggplot(data = transport, aes(x = Month, y = Mixing.Ratio, colour = Source, group = Source))
-p4 <- p4 + geom_point()
-p4 <- p4 + geom_path()
-p4 <- p4 + facet_wrap(~ Region, nrow = 1)
-p4 <- p4 + plot_theme()
-p4 <- p4 + theme(legend.title = element_blank())
-p4 <- p4 + theme(axis.title.x = element_blank())
-p4 <- p4 + ylab("O3 Mixing Ratio (ppbv)")
-p4 <- p4 + ggtitle("O3 Mixing Ratios of Transported Sources in Receptor Regions")
-p4 <- p4 + scale_x_discrete(labels = c("J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"))
-p4 <- p4 + scale_colour_manual(values = country.colours, labels = c("Total", "North America", "Europe", "Middle East", "Russia", "South Asia", "East Asia", "Ocean", "Rest"))
-p4
-
-CairoPDF(file = "Yearly_Transported_O3_from_countries_to_Receptors.pdf", width = 13, height = 7)
-print(p4)
-dev.off()
-
-transported.contributions <- transport %>%
-  spread(Source, Mixing.Ratio) %>%
-  gather(Source, Mixing.Ratio, -Month, -Region, -Total) %>%
-  mutate(Contribution = Mixing.Ratio / Total) %>%
-  filter(Mixing.Ratio != 0)
-transported.contributions
-
-transported.contributions$Source <- factor(transported.contributions$Source, levels = c("Rest", "Ocean", "East.Asia", "South.Asia", "Russia", "Middle.East", "Europe", "North.America"))
-
-p5 <- ggplot(data = transported.contributions, aes(x = Month, y = Contribution, fill = Source))
-p5 <- p5 + geom_bar(stat = "identity")
-p5 <- p5 + facet_wrap( ~ Region, nrow = 1)
-p5 <- p5 + plot_theme()
-p5 <- p5 + scale_x_discrete(labels = c("J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"), expand = c(0, 0))
-p5 <- p5 + scale_fill_manual(values = country.colours, labels = c("Rest", "Ocean", "East Asia", "South Asia", "Russia", "Middle East", "Europe", "North America"))
-p5 <- p5 + scale_y_continuous(limits = c(0, 1.01), label = percent, expand = c(0, 0))
-p5 <- p5 + ylab("Percent Contributions of NOx Sources to Transported O3 in Receptor Regions")
-p5 <- p5 + theme(axis.title.x = element_blank())
-p5 <- p5 + ggtitle("Yearly Cycle of Percent Contributions of Transported NOx Sources in Receptor Regions")
-p5 <- p5 + theme(legend.title = element_blank())
-p5
-
-CairoPDF(file = "Yearly_Transported_O3_from_countries_to_Receptors_contributions.pdf", width = 13, height = 7)
-print(p5)
-dev.off()
-
-CairoPDF(file = "Yearly_Transported_O3_from_Countries_Total_plus_Contributions.pdf", width = 13, height = 7)
-print(grid.draw(rbind(ggplotGrob(p4), ggplotGrob(p5), size = "last")))
 dev.off()

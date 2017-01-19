@@ -20,20 +20,18 @@ world.map.correct <- world.map %>%
 world.map.correct <- rbind(world.map.correct, out.grid)
 
 p <- ggplot()
-p <- p + geom_raster(data = all.data %>% filter(Season %in% c("JJA", "DJF") & Source %in% c("Total", "Transported", "Other")), aes(x = long, y = lat, fill = Mixing.Ratio), hjust = 1, vjust = 1)
+p <- p + geom_raster(data = all.data, aes(x = long, y = lat, fill = Mixing.Ratio), hjust = 1, vjust = 1)
 p <- p + geom_path(data = world.map.correct, aes(x = long, y = lat, group = group))
 p <- p + plot_theme()  
 p <- p + facet_grid(Source ~ Season)
 p <- p + scale_y_continuous(expand = c(0, 0))
 p <- p + scale_x_continuous(expand = c(0, 0))
-p <- p + scale_fill_gradientn(name = "O3 MDA8 (ppbv)", colours = c("purple", "white","blue", "green", "yellow", "orange", "red", "brown", "black"), values = rescale(c(1, 5, 10, 20, 30, 50, 75, 100, 125)), breaks = seq(0, 125, 25), limits = c(0, 125))
-p
+p <- p + scale_fill_gradientn(name = "O3 MDA8 (ppbv)", colours = rev(c('#9e0142','#d53e4f','#f46d43','#fdae61','#fee08b','#ffffbf','#e6f598','#abdda4','#66c2a5','#3288bd','#5e4fa2')), values = rescale(c(1, 2.5, 5, 10, 20, 30, 40, 50, 75, 100, 125)), breaks = seq(0, 125, 25), limits = c(0, 125))
 p <- p + theme(axis.title = element_blank())
 p <- p + theme(axis.text = element_blank())
 p <- p + theme(axis.ticks = element_blank())
 p <- p + theme(axis.line = element_blank())
 p <- p + ggtitle("Seasonal Average of O3 MDA8 in 2010")
-p
 p <- p + theme(legend.position = "top")
 p <- p + guides(fill = guide_colourbar(barwidth = 22, barheight = 2.5))
 p <- p + theme(strip.text = element_text(face = "bold", size = 20))
@@ -41,7 +39,6 @@ p <- p + theme(legend.title = element_text(face = "bold", size = 20))
 p <- p + theme(strip.text.y = element_text(hjust = 0))
 p <- p + theme(legend.text = element_text(size = 18))
 p <- p + theme(plot.title = element_text(size = 22))
-p
 
 CairoPDF(file = "Seasonal_MDA8_Global_distribution.pdf", width = 21, height = 15)
 print(p)

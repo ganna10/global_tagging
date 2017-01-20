@@ -51,8 +51,9 @@ sums$Source[sums$Source == "O3"] <- "Total O3"
 sums$Source[sums$Source == "Biomass.Burning"] <- "Biomass Burning"
 sums$Source <- factor(sums$Source, levels = c("Total O3", "Anthropogenic", "Natural", "Biomass Burning", "Aircraft", "Stratosphere", "Lightning", "Others"))
 
+# lightning plots has maximum 0.05 ppb of O3, compared to the other sources it is very insignificant 
 p <- ggplot()
-p <- p + geom_raster(data = sums, aes(x = lon, y = lat, fill = Mixing.Ratio), hjust = 1, vjust = 1)
+p <- p + geom_raster(data = sums %>% filter(Source == "Lightning"), aes(x = lon, y = lat, fill = Mixing.Ratio), hjust = 1, vjust = 1)
 p <- p + geom_path(data = world.map.correct, aes(x = long, y = lat, group = group))
 p <- p + facet_wrap(~ Source, ncol = 2, scales = "free")
 p <- p + theme_tufte()
@@ -60,7 +61,9 @@ p <- p + theme(strip.text = element_text(size = 18, face = "bold"))
 p <- p + theme(legend.position = "bottom")
 p <- p + scale_y_continuous(limits = c(-90, 90), breaks = seq(-90, 90, 30), expand = c(0, 0))
 p <- p + scale_x_continuous(limits = c(-180, 180), breaks = seq(-180, 180, 30), expand = c(0, 0))
-p <- p + scale_fill_gradientn(name = "O3 MDA8 (ppbv)", colours = rev(c('#9e0142','#d53e4f','#f46d43','#fdae61','#fee08b','#ffffbf','#e6f598','#abdda4','#66c2a5','#3288bd','#5e4fa2')), values = rescale(c(1, 2.5, 5, 10, 20, 30, 40, 50, 75, 100, 125)), breaks = seq(0, 125, 25), limits = c(0, 125))
+# '#9e0142','#d53e4f','#f46d43','#fdae61','#fee08b','#ffffbf','#e6f598','#abdda4','#66c2a5','#3288bd','#5e4fa2'
+p <- p + scale_fill_gradientn(name = "O3 MDA8 (ppbv)", colours = rev(c('#e31a1c','#a6cee3','#b2df8a','#33a02c','#fb9a99','#fdbf6f','#1f78b4','#ff7f00','#cab2d6','#6a3d9a','#ffff99','#b15928')), values = rescale(c(0.5, 1, 2, 5, 10, 20, 30, 40, 50, 75, 100, 125)), breaks = c(0.001, 0.005)) #, 0.1, 2, 5, 10, 20, 40, 50, 75, 100, 125), limits = c(0, 125))
+p
 p <- p + theme(legend.title = element_text(size = 18, face = "bold"))
 p <- p + theme(axis.title = element_blank())
 p <- p + theme(axis.ticks = element_blank())
@@ -68,7 +71,7 @@ p <- p + theme(axis.text = element_blank())
 p <- p + theme(legend.text = element_text(size = 16))
 p <- p + theme(panel.spacing = unit(5, "mm"))
 # p <- p + theme(plot.margin = unit(c(1, 5, 1, 1), "mm"))
-p <- p + guides(fill = guide_colourbar(barwidth = 20, barheight = 4))
+p <- p + guides(fill = guide_colourbar(barwidth = 40, barheight = 4))
 # p <- p + ggtitle("Total Ozone Allocated to Different Sources of NOx Emissions")
 # p <- p + theme(plot.title = element_text(face = "bold", size = 20, hjust = 0.5))
 p

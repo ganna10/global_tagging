@@ -1,4 +1,4 @@
-# setwd("~/Documents//Analysis//2016_HTAP//Evaluation")
+setwd("~/Documents//Analysis//2016_HTAP//Evaluation")
 
 get.difference.data <- function (month) {
   file.month <- sprintf("%02d", month)
@@ -22,7 +22,7 @@ get.difference.data <- function (month) {
   all.data <- rbind(ncar.df, nox.df) 
   diff.df <- all.data %>%
     spread(Type, O3) %>%
-    mutate(Abs.diff = NCAR - NOx, Rel.diff = (NCAR - NOx) * 100 / NCAR, Month = month.abb[month]) %>%
+    mutate(Abs.diff = NOx - NCAR, Rel.diff = (NOx - NCAR) * 100 / NCAR, Month = month.abb[month]) %>%
     dplyr::select(-NCAR, -NOx) %>%
     gather(Type, Difference, -lon, -lat, -Month)
   return(diff.df)
@@ -54,7 +54,7 @@ p <- ggplot()
 p <- p + geom_raster(data = data.df %>% filter(Type == "Abs.diff"), aes(x = lon, y = lat, fill = Difference))
 p <- p + geom_path(data = world.map.correct, aes(x = long, y = lat, group = group))
 p <- p + facet_wrap(~ Month, nrow = 3)
-p <- p + scale_fill_gradient2(low = muted("Blue"), mid = "White", high = muted("Red"), name = "NCAR - NOx.Tagging (ppbv)", limits = c(-20, 20), breaks = seq(-20, 20, by = 5))
+p <- p + scale_fill_gradient2(low = muted("Blue"), mid = "White", high = muted("Red"), name = "NOx.Tagging - NCAR (ppbv)", limits = c(-30, 30), breaks = seq(-30, 30, by = 5))
 p <- p + plot_theme()
 p <- p + scale_y_continuous(expand = c(0, 0))
 p <- p + scale_x_continuous(expand = c(0, 0))

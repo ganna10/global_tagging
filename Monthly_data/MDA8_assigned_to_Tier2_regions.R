@@ -186,11 +186,23 @@ plotting <- function (region, data.frame) {
     mutate(Total = rowSums(.[3:9])) %>%
     gather(Emission.Source, MDA8, -Month, -Region, -Total) %>%
     mutate(Contribution = MDA8 / Total) %>%
-    dplyr::select(Month, Region, Emission.Source, Contribution)
+    dplyr::select(Month, Region, Emission.Source, Contribution, MDA8)
   transport$Emission.Source <- factor(transport$Emission.Source, levels = plot.levels)
   
   country.colours = c("Total" = "#000000", "North.America" = "#a6cee3", "Europe" = "#b2df8a", "Middle.East" = "#ff7f00", "Russia" = "#e31a1c", "South.Asia" = "#6a3d9a", "East.Asia" = "#1f78b4", "Ocean" = "#cab2d6", "Rest" = "#33a02c")
-
+  
+  p2 <- ggplot(data = transport, aes(x = Month, y = MDA8, colour = Emission.Source, group = Emission.Source))
+  p2 <- p2 + geom_point()
+  p2 <- p2 + geom_line()
+  p2 <- p2 + facet_wrap(~ Region, nrow = 1)
+  p2 <- p2 + plot_theme()
+  p2 <- p2 + scale_x_discrete(labels = c("J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"))
+  p2 <- p2 + scale_colour_manual(values = country.colours, labels = legend.levels)
+  p2 <- p2 + theme(axis.title = element_blank())
+  p2 <- p2 + ggtitle("Monthly Mean of MDA8 of Transported NOx Sources from Source Regions to Tier 2 Receptor Regions")
+  p2 <- p2 + theme(legend.title = element_blank())
+  p2 <- p2 + theme(plot.title = element_text(size = 12))
+  
   p5 <- ggplot(data = transport, aes(x = Month, y = Contribution, fill = Emission.Source))
   p5 <- p5 + geom_bar(stat = "identity")
   p5 <- p5 + facet_wrap( ~ Region, nrow = 1)
@@ -202,11 +214,10 @@ plotting <- function (region, data.frame) {
   p5 <- p5 + ggtitle("Percent Contributions of Transported NOx Sources from Source Regions to Tier 2 Receptor Regions")
   p5 <- p5 + theme(legend.title = element_blank())
   p5 <- p5 + theme(plot.title = element_text(size = 12))
-  p5
   
-  file.name <- paste0(region, "_O3_Yearly_Cycle_Total_plus_Contributions_plus_Country_Tier2.pdf")
+  file.name <- paste0(region, "_MDA8_O3_Yearly_Cycle_Total_plus_Contributions_plus_Country_Tier2.pdf")
   CairoPDF(file = file.name, width = 14, height = 9)
-  print(grid.draw(rbind(ggplotGrob(p), ggplotGrob(p1), ggplotGrob(p5), size = "last")))
+  print(grid.draw(rbind(ggplotGrob(p), ggplotGrob(p2), ggplotGrob(p5), size = "last")))
   dev.off()
 }
 

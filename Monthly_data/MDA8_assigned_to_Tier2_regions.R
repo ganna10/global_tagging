@@ -199,7 +199,7 @@ plotting <- function (region, data.frame) {
   p2 <- p2 + scale_x_discrete(labels = c("J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"))
   p2 <- p2 + scale_colour_manual(values = country.colours, labels = legend.levels)
   p2 <- p2 + theme(axis.title = element_blank())
-  p2 <- p2 + ggtitle("Monthly Mean of MDA8 of Transported NOx Sources from Source Regions to Tier 2 Receptor Regions")
+  p2 <- p2 + ggtitle("Monthly Mean of MDA8 (ppbv) of Transported NOx Sources from Source Regions to Tier 2 Receptor Regions")
   p2 <- p2 + theme(legend.title = element_blank())
   p2 <- p2 + theme(plot.title = element_text(size = 12))
   
@@ -216,8 +216,8 @@ plotting <- function (region, data.frame) {
   p5 <- p5 + theme(plot.title = element_text(size = 12))
   
   file.name <- paste0(region, "_MDA8_O3_Yearly_Cycle_Total_plus_Contributions_plus_Country_Tier2.pdf")
-  CairoPDF(file = file.name, width = 14, height = 9)
-  print(grid.draw(rbind(ggplotGrob(p), ggplotGrob(p2), ggplotGrob(p5), size = "last")))
+  CairoPDF(file = file.name, width = 14, height = 7)
+  print(grid.draw(rbind(ggplotGrob(p), ggplotGrob(p2), size = "last")))
   dev.off()
 }
 

@@ -2,13 +2,14 @@ setwd("~/Documents//Analysis//2016_HTAP//Evaluation")
 
 get.difference.data <- function (month) {
   file.month <- sprintf("%02d", month)
+  text.month <- toupper(month.abb[month])
   
   # ncar data
-  ncar.file.name <- paste0("/data/nosync//modeloutput//CESM//HTAP2_CCMI//cesm111ccmi32_htap_base.cam.h0.2010-", file.month, ".nc")
-  ncar.raster <- raster(ncar.file.name, lev = 56, varname = "O3")
-  ncar.df <- tbl_df(as.data.frame(rasterToPoints(rotate(ncar.raster))))
+  ncar.file.name <- paste0("/work/users/jco/HTAP2_Model_Output/CAMchem_BASE/htap2_CAMchem_BASE_vmro3_ModelLevel_2010-", text.month, ".nc")
+  ncar.raster <- raster(ncar.file.name, lev = 1, varname = "vmro3")
+  ncar.df <- tbl_df(as.data.frame(rasterToPoints(ncar.raster)))
   ncar.df <- ncar.df %>%
-    mutate(O3 = O3.concentration * 1e9, Type = "NCAR") %>%
+    mutate(O3 = O3.Volume.Mixing.Ratio * 1e9, Type = "CAMchem") %>%
     dplyr::select(lon = x, lat = y, O3, Type)
   
   # NOx tagging data
@@ -22,9 +23,8 @@ get.difference.data <- function (month) {
   all.data <- rbind(ncar.df, nox.df) 
   diff.df <- all.data %>%
     spread(Type, O3) %>%
-    mutate(Abs.diff = NOx - NCAR, Rel.diff = (NOx - NCAR) * 100 / NCAR, Month = month.abb[month]) %>%
-    dplyr::select(-NCAR, -NOx) %>%
-    gather(Type, Difference, -lon, -lat, -Month)
+    mutate(Diff = CAMchem -NOx, Month = month.abb[month]) %>%
+    dplyr::select(-CAMchem, -NOx)
   return(diff.df)
 }
 
@@ -32,6 +32,11 @@ months <- seq(1, 12, by = 1)
 data.list <- lapply(months, get.difference.data)
 data.df <- do.call("rbind", data.list)
 data.df
+
+yearly.diff <- data.df %>%
+  group_by(lon, lat) %>%
+  summarise(Diff = mean(Diff))
+yearly.diff
 
 data.df$Month <- factor(data.df$Month, levels = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"))
 
@@ -51,10 +56,10 @@ world.map.correct <- world.map %>%
 world.map.correct <- rbind(world.map.correct, out.grid)
 
 p <- ggplot()
-p <- p + geom_raster(data = data.df %>% filter(Type == "Abs.diff"), aes(x = lon, y = lat, fill = Difference))
+p <- p + geom_raster(data = yearly.diff, aes(x = lon, y = lat, fill = Diff))
 p <- p + geom_path(data = world.map.correct, aes(x = long, y = lat, group = group))
-p <- p + facet_wrap(~ Month, nrow = 3)
-p <- p + scale_fill_gradient2(low = muted("Blue"), mid = "White", high = muted("Red"), name = "NOx.Tagging - NCAR (ppbv)", limits = c(-30, 30), breaks = seq(-30, 30, by = 5))
+# p <- p + facet_wrap(~ Month, nrow = 3)
+p <- p + scale_fill_gradient2(low = muted("Blue"), mid = "White", high = muted("Red"), name = "CAMchem - NOx.Tagging (ppbv)") #, limits = c(-30, 30), breaks = seq(-30, 30, by = 5))
 p <- p + plot_theme()
 p <- p + scale_y_continuous(expand = c(0, 0))
 p <- p + scale_x_continuous(expand = c(0, 0))
@@ -68,6 +73,6 @@ p <- p + theme(legend.text = element_text(size = 12))
 p <- p + theme(strip.text = element_text(face = "bold", size = 20))
 p <- p + guides(fill = guide_colourbar(barwidth = 30, barheight = 4))
 
-CairoPDF(file = "Absolute_differences_O3_between_NCAR_NOx.Tagging.pdf", width = 20, height = 14)
+CairoPDF(file = "Absolute_differences_O3_between_CAMchem_NOx_Tagging.pdf", width = 20, height = 14)
 print(p)
 dev.off()

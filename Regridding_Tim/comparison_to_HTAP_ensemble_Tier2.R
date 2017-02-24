@@ -44,7 +44,7 @@ plotting <- function (region, data.frame) {
     stop("No region")
   }
   
-  colours <- c("Total.Tagged" = "#000000", "Base.Run" = "#e31a1c", "HTAP.Max" = "#8dd3c7", "HTAP.Min" = "#a6cee3")
+  colours <- c("Total.Tagged" = "#000000", "Base.Run" = "#e31a1c", "HTAP.Max" = "#377eb8", "HTAP.Min" = "#ff7f00", "HTAP.Mean" = "#898989", "CAMchem" = "#984ea3")
   
   p <- ggplot(data = df, aes(x = Month, y = Mixing.Ratio, colour = Type, group = Type))
   p <- p + geom_point()
@@ -73,12 +73,17 @@ df.ensemble <- ensemble.data %>%
   mutate(Mixing.Ratio = Mixing.Ratio * 1e9) %>%
   group_by(Model, Month, Region) %>%
   summarise(Zonal.Mean = mean(Mixing.Ratio))
+
+camchem <- df.ensemble %>%
+  filter(Model == "CAMchem") %>%
+  dplyr::select(Month, Region, Type = Model, Mixing.Ratio = Zonal.Mean)
   
 # Calculate Min and Max of HTAP ensemble
 final.htap <- df.ensemble %>%
   group_by(Month, Region) %>%
   summarise(HTAP.Max = max(Zonal.Mean), HTAP.Min = min(Zonal.Mean)) %>%
   gather(Type, Mixing.Ratio, -Month, -Region)
+final.htap <- rbind(final.htap, camchem)
 final.htap
 
 # NOx Tagging data
@@ -99,9 +104,9 @@ base.df <- base.data %>%
 base.df
 
 # combine all data
-all.data <- rbind(final.htap, zonal.mean, base.df)
+all.data <- rbind(final.htap, zonal.mean) #, base.df)
 all.data$Month <- factor(all.data$Month, levels = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"))
-all.data$Type <- factor(all.data$Type, levels = c("HTAP.Max", "Base.Run", "Total.Tagged", "HTAP.Min"))
+all.data$Type <- factor(all.data$Type, levels = c("HTAP.Max", "CAMchem", "Total.Tagged", "HTAP.Min")) #, "Base.Run"
 all.data
 
 emission.regions <- c("SAS", "NAM", "EUR", "EAS", "MDE", "RBU", "OCN", "Rest")

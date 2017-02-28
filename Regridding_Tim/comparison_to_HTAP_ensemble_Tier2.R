@@ -46,18 +46,20 @@ plotting <- function (region, data.frame) {
   
   colours <- c("Total.Tagged" = "#000000", "Base.Run" = "#e31a1c", "HTAP.Max" = "#377eb8", "HTAP.Min" = "#ff7f00", "HTAP.Mean" = "#898989", "CAMchem" = "#984ea3")
   
-  p <- ggplot(data = df, aes(x = Month, y = Mixing.Ratio, colour = Type, group = Type))
-  p <- p + geom_point()
-  p <- p + geom_line()
+  p <- ggplot(data = df, aes(x = Month, y = Mixing.Ratio, group = Type))
+  p <- p + geom_ribbon(aes(ymin = HTAP.Min, ymax = HTAP.Max), fill = "grey70")
+  p <- p + geom_point(aes(colour = Type))
+  p <- p + geom_line(aes(colour = Type))
   p <- p + facet_wrap(~ Region, nrow = 1)
   p <- p + plot_theme()
   p <- p + ylab("O3 (ppbv)")
   p <- p + theme(axis.title = element_blank())
-  p <- p + ggtitle(plot.title, subtitle = "\nMean Ozone (ppbv) in Tier 2 Receptor Regions from NOx sources.\nComparison with Min and Max of HTAP ensemble and Base Tagged run")
+  p <- p + ggtitle(plot.title, subtitle = "\nMean Ozone (ppbv) in Tier 2 Receptor Regions from NOx sources.\nComparison with Min and Max of HTAP ensemble and NCAR CAMchem run")
   p <- p + scale_colour_manual(values = colours, limits = levels(factor(df$Type)))
   p <- p + theme(legend.title = element_blank())
-  p <- p + scale_x_discrete(labels = c("J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"))
+  p <- p + scale_x_discrete(labels = c("J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"), expand = c(0, 0.07))
   p <- p + theme(plot.subtitle = element_text(face = "bold", size = 12))
+  p <- p + theme(legend.position = "top")
 
   file.name <- paste0(region, "_O3_Yearly_Cycle_Tier2_Ensemble_Tagged_Base.pdf")
   CairoPDF(file = file.name, width = 11, height = 7)
@@ -96,18 +98,20 @@ zonal.mean <- NOx.tagging %>%
 tbl_df(zonal.mean)
 
 # HTAP Base Run
-base.data <- tbl_df(read.csv(file = "HTAP_base_2010_assigned_to_Tier2_regions.csv", header = TRUE))
-base.df <- base.data %>%
-  mutate(Mixing.Ratio = Mixing.Ratio * 1e9, Type = "Base.Run") %>%
-  group_by(Month, Region, Type) %>%
-  summarise(Mixing.Ratio = mean(Mixing.Ratio))
-base.df
+# base.data <- tbl_df(read.csv(file = "HTAP_base_2010_assigned_to_Tier2_regions.csv", header = TRUE))
+# base.df <- base.data %>%
+#   mutate(Mixing.Ratio = Mixing.Ratio * 1e9, Type = "Base.Run") %>%
+#   group_by(Month, Region, Type) %>%
+#   summarise(Mixing.Ratio = mean(Mixing.Ratio))
+# base.df
 
 # combine all data
 all.data <- rbind(final.htap, zonal.mean) #, base.df)
 all.data$Month <- factor(all.data$Month, levels = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"))
 all.data$Type <- factor(all.data$Type, levels = c("HTAP.Max", "CAMchem", "Total.Tagged", "HTAP.Min")) #, "Base.Run"
-all.data
+new.data <- all.data %>%
+  spread(Type, Mixing.Ratio) %>%
+  gather(Type, Mixing.Ratio, -Month, -Region, -HTAP.Max, -HTAP.Min)
 
 emission.regions <- c("SAS", "NAM", "EUR", "EAS", "MDE", "RBU", "OCN", "Rest")
-lapply(emission.regions, plotting, data.frame = all.data)
+lapply(emission.regions, plotting, data.frame = new.data)

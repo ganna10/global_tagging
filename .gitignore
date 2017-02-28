@@ -36,3 +36,5 @@ vignettes/*.pdf
 *.csv
 *.mod
 *.o
+*.txt
+*.png

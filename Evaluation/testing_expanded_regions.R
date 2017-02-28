@@ -42,7 +42,7 @@ get.data <- function (name, month) {
   return(data.df)
 }
 
-months <- seq(1, 1, by = 1)
+months <- seq(1, 9, by = 1)
 types <- c("Old", "New")
 all.data <- NULL
 
@@ -106,29 +106,29 @@ o3.diff <- all.data %>%
 o3.diff$Month <- factor(o3.diff$Month, levels = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"))
 o3.diff
 
-p1 <- ggplot()
-p1 <- p1 + geom_raster(data = o3.diff, aes(x = lon, y = lat, fill = Difference), hjust = 1, vjust = 1)
-p1 <- p1 + geom_path(data = map_data("world"), aes(x = long, y = lat, group = group))
-p1 <- p1 + facet_grid(Species ~ Month)
-p1 <- p1 + plot_theme()
-p1 <- p1 + scale_y_continuous(expand = c(0, 0))
-p1 <- p1 + scale_x_continuous(expand = c(0, 0))
-p1 <- p1 + theme(axis.title = element_blank())
-p1 <- p1 + theme(axis.text = element_blank())
-p1 <- p1 + theme(axis.ticks = element_blank())
-p1 <- p1 + theme(axis.line = element_blank())
-p1 <- p1 + scale_fill_distiller(palette = "Spectral", name = "New - Old Run (ppbv)")
-p1 <- p1 + theme(legend.position = "top")
-p1 <- p1 + theme(legend.title = element_text(face = "bold", size = 28))
-p1 <- p1 + guides(fill = guide_colourbar(barwidth = 70, barheight = 6))
-p1 <- p1 + theme(strip.text = element_text(face = "bold", size = 28))
-p1 <- p1 + ggtitle("Difference between Real O3 and the Sum of All Tagged O3 Components (ppbv)")
-p1 <- p1 + theme(legend.text = element_text(size = 26))
-p1 <- p1 + theme(plot.title = element_text(face = "bold", size = 32))
-
-CairoPDF(file = "Differences_in_O3_between_New_and_Old_Tagging_runs.pdf", width = 45, height = 30)
-print(p1)
-dev.off()
+# p1 <- ggplot()
+# p1 <- p1 + geom_raster(data = o3.diff, aes(x = lon, y = lat, fill = Difference), hjust = 1, vjust = 1)
+# p1 <- p1 + geom_path(data = map_data("world"), aes(x = long, y = lat, group = group))
+# p1 <- p1 + facet_grid(Species ~ Month)
+# p1 <- p1 + plot_theme()
+# p1 <- p1 + scale_y_continuous(expand = c(0, 0))
+# p1 <- p1 + scale_x_continuous(expand = c(0, 0))
+# p1 <- p1 + theme(axis.title = element_blank())
+# p1 <- p1 + theme(axis.text = element_blank())
+# p1 <- p1 + theme(axis.ticks = element_blank())
+# p1 <- p1 + theme(axis.line = element_blank())
+# p1 <- p1 + scale_fill_distiller(palette = "Spectral", name = "New - Old Run (ppbv)")
+# p1 <- p1 + theme(legend.position = "top")
+# p1 <- p1 + theme(legend.title = element_text(face = "bold", size = 28))
+# p1 <- p1 + guides(fill = guide_colourbar(barwidth = 70, barheight = 6))
+# p1 <- p1 + theme(strip.text = element_text(face = "bold", size = 28))
+# p1 <- p1 + ggtitle("Difference between Real O3 and the Sum of All Tagged O3 Components (ppbv)")
+# p1 <- p1 + theme(legend.text = element_text(size = 26))
+# p1 <- p1 + theme(plot.title = element_text(face = "bold", size = 32))
+# 
+# CairoPDF(file = "Differences_in_O3_between_New_and_Old_Tagging_runs.pdf", width = 45, height = 30)
+# print(p1)
+# dev.off()
 
 ##### Global Monthly Mean differences between Real O3 and common tags in New and Old Tagged runs
 global.mean <- all.data %>%
@@ -153,3 +153,34 @@ CairoPDF(file = "Monthly_Global_Mean_O3_between_New_Old_Runs.pdf", width = 10, h
 print(p2)
 dev.off()
 
+###### percentage contribution of initial conditions to real O3
+calc.perct <- all.data %>%
+  filter(Type == "New", Species %in% c("O3", "O3_X_INI")) %>%
+  spread(Species, Mixing.Ratio) %>%
+  mutate(INI.Contribution = O3_X_INI / O3 * 100) %>%
+  dplyr::select(lon, lat, Month, INI.Contribution)
+calc.perct$Month <- factor(calc.perct$Month, levels = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"))
+
+p3 <- ggplot()
+p3 <- p3 + geom_raster(data = calc.perct, aes(x = lon, y = lat, fill = INI.Contribution), hjust = 1, vjust = 1)
+p3 <- p3 + geom_path(data = map_data("world"), aes(x = long, y = lat, group = group))
+p3 <- p3 + facet_wrap(~ Month, nrow = 3)
+p3 <- p3 + plot_theme()
+p3 <- p3 + scale_y_continuous(expand = c(0, 0))
+p3 <- p3 + scale_x_continuous(expand = c(0, 0))
+p3 <- p3 + theme(axis.title = element_blank())
+p3 <- p3 + theme(axis.text = element_blank())
+p3 <- p3 + theme(axis.ticks = element_blank())
+p3 <- p3 + theme(axis.line = element_blank())
+p3 <- p3 + scale_fill_distiller(palette = "Spectral", name = "% Contribution")
+p3 <- p3 + theme(legend.position = "top")
+p3 <- p3 + theme(legend.title = element_text(face = "bold", size = 18))
+p3 <- p3 + guides(fill = guide_colourbar(barwidth = 40, barheight = 3))
+p3 <- p3 + theme(strip.text = element_text(face = "bold", size = 20))
+p3 <- p3 + ggtitle("Percent Contribution of Initial Conditions to Total O3")
+p3 <- p3 + theme(legend.text = element_text(size = 16))
+p3 <- p3 + theme(plot.title = element_text(face = "bold", size = 22))
+
+CairoPDF(file = "Contribution_of_initial_conditions.pdf", width = 30, height = 15)
+print(p3)
+dev.off()

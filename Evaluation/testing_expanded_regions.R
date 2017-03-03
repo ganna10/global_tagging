@@ -3,7 +3,7 @@ setwd("~/Documents//Analysis//2016_HTAP//Evaluation")
 get.data <- function (name, month) {
   mon <- sprintf("%02d", month)
   if (name == "New") {
-    file.name <- paste0("/worknb/users/jco/cesm/archive/HTAP_NOx_Tagging_Location_Sources_Spinup/atm/hist/HTAP_NOx_Tagging_Location_Sources_Spinup.2009-", mon, ".timavg.mean.nc")
+    file.name <- paste0("/worknb/users/jco/cesm/archive/HTAP_NOx_Tagging_Location_Sources_Spinup/atm/hist/HTAP_NOx_Tagging_Location_Sources_Spinup.2010-", mon, ".timavg.mean.nc")
   } else if (name == "Old") {
     file.name <- paste0("/worknb/users/jco/HTAP/evaluation_with_ncar/HTAP_NOx_Tagging.cam.h2.2010-", mon, ".O3mean.nc")
   }
@@ -42,7 +42,7 @@ get.data <- function (name, month) {
   return(data.df)
 }
 
-months <- seq(1, 9, by = 1)
+months <- seq(1, 1, by = 1)
 types <- c("Old", "New")
 all.data <- NULL
 

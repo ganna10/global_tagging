@@ -21,7 +21,7 @@ plot.regions <- function (df, region) {
   p <- ggplot(filtered, aes(x = Month, y = Value, colour = Metric, group = Metric))
   p <- p + geom_point()
   p <- p + geom_line()
-  p <- p + facet_wrap(~ Source, nrow = 4, scales = "free")
+  p <- p + facet_wrap(~ Source, nrow = 4, scales = "free_x")
   p <- p + theme(panel.background = element_blank())
   p <- p + theme(strip.background = element_blank())
   p <- p + theme(axis.line = element_line(colour = "black"))
@@ -41,7 +41,7 @@ plot.regions <- function (df, region) {
 
 receptor.column <- c("MBS", "IBE", "ITA", "SEE", "UKI", "FRA", "BNL", "GER", "CEN", "BNS", "SCA", "BLT", "RBU", "TCA")
 months <- seq(5, 9, by = 1)
-metrics <- c("mda8", "mda1", "mean", "somo35", "somo10", "perc95", "perc75", "perc50", "perc25", "perc05", "aotd", "aotn", "w126", "90")
+metrics <- c("mda8", "mda1", "mean", "somo35", "somo10", "perc95", "perc75", "perc50", "perc25", "perc05", "aotd", "aotn", "w126", "w90")
 all.data <- NULL
 
 for (i in metrics) {
@@ -51,8 +51,6 @@ for (i in metrics) {
 }
 levels(factor(all.data$Metric))
 all.data$Month <- factor(all.data$Month, levels = c("May", "Jun", "Jul", "Aug", "Sep"))
-no.rest <- all.data %>%
-  filter(Source != "RST")
-no.rest$Source <- factor(no.rest$Source, levels = c("MBS", "IBE", "ITA", "SEE", "UKI", "FRA", "BNL", "GER", "CEN", "BNS", "SCA", "BLT", "RBU", "TCA", "STR", "BIO", "BMB", "NAM", "ASI", "OCN"))
+all.data$Source <- factor(all.data$Source, levels = c("MBS", "IBE", "ITA", "SEE", "UKI", "FRA", "BNL", "GER", "CEN", "BNS", "SCA", "BLT", "RBU", "TCA", "STR", "BIO", "BMB", "NAM", "ASI", "OCN", "RST"))
 
-lapply(receptor.column, plot.regions, df = no.rest)
+lapply(receptor.column, plot.regions, df = all.data)

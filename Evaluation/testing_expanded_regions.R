@@ -42,7 +42,7 @@ get.data <- function (name, month) {
   return(data.df)
 }
 
-months <- seq(1, 1, by = 1)
+months <- seq(1, 6, by = 1)
 types <- c("Old", "New")
 all.data <- NULL
 
@@ -146,6 +146,7 @@ p2 <- p2 + ylab("Global Mean O3 (ppbv)")
 p2 <- p2 + theme(axis.title.x = element_blank())
 p2 <- p2 + scale_x_discrete(labels = c("J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"))
 p2 <- p2 + scale_colour_manual(values = c("New" = "#0352cb", "Old" = "#ef6638"))
+p2 <- p2 + scale_y_continuous(limits = c(0, 30))
 p2 <- p2 + theme(legend.position = "top")
 p2 <- p2 + theme(legend.title = element_blank())
 

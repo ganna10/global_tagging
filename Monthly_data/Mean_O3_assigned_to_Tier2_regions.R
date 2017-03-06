@@ -1,16 +1,15 @@
 setwd("~/Documents//Analysis//2016_HTAP//Monthly_data")
 
-# all.data <- tbl_df(read.csv(file = "HTAP_NOx_Tagging_Jan_assigned_to_Tier2_regions.csv"))
-# all.data <- tbl_df(read.csv(file = "/worknb/users/jco/cesm/archive/HTAP_NOx_Tagging_Location_Sources_Spinup/atm/hist/HTAP_base_Jan_assigned_to_Tier2_regions.csv"))
+all.data <- tbl_df(read.csv(file = "/work/users/jco/tagging_global/Scripts/Tier2_Analysis/Mean/20170306/2010_assigned_to_Tier2_regions.csv"))
 
 # calculate zonal means
-# zonal.mean <- all.data %>%
-#   mutate(Mixing.Ratio = Mixing.Ratio * 1e9) %>%
-#   group_by(Species, Month, Region) %>%
-#   summarise(Zonal.Mean = mean(Mixing.Ratio)) 
-# tbl_df(zonal.mean)
-# 
-# zonal.mean$Month <- factor(zonal.mean$Month, levels = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"))
+zonal.mean <- all.data %>%
+  mutate(Mixing.Ratio = Mixing.Ratio * 1e9) %>%
+  group_by(Species, Month, Region) %>%
+  summarise(Zonal.Mean = mean(Mixing.Ratio)) 
+tbl_df(zonal.mean)
+
+zonal.mean$Month <- factor(zonal.mean$Month, levels = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"))
 
 # assign to total, local, transported, natural, other
 get.source <- function (species, Region) {
@@ -92,7 +91,7 @@ plotting <- function (region, data.frame) {
       filter(str_detect(Region, " US") | str_detect(Region, "Canada"))    
     df$Region <- factor(df$Region, levels = c("NE US", "SE US", "NW US", "SW US", "E Canada", "W Canada and Alaska"))
     plot.levels <- c("Rest", "Ocean", "South.East.Asia", "East.Asia", "South.Asia",  "Russia", "North.Africa", "Middle.East", "Europe", "Mexico.Central.America")
-    legend.levels <- c("Rest", "Ocean", "South East Asia", "East Asia",  "South Asia", "Russia", "North.Africa", "Middle East", "Europe", "Mexico, Central America")
+    legend.levels <- c("Rest", "Ocean", "South East Asia", "East Asia",  "South Asia", "Russia", "North Africa", "Middle East", "Europe", "Mexico, Central America")
     plot.title <- "North America: Monthly Average O3 for Emissions and Meteorology for Year 2010"
   } else if (region == "EUR") {
     df <- data.frame %>%
@@ -230,5 +229,5 @@ plotting <- function (region, data.frame) {
   dev.off()
 }
 
-emission.regions <- c("SAS", "NAM", "EUR", "EAS", "MDE", "RBU", "OCN", "Rest")
+emission.regions <- c("SAS", "NAM", "EUR", "EAS", "MDE", "RBU") #, "OCN", "Rest")
 lapply(emission.regions, plotting, data.frame = zonal.mean)

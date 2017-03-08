@@ -23,7 +23,7 @@ get.difference.data <- function (month) {
   all.data <- rbind(ncar.df, nox.df) 
   diff.df <- all.data %>%
     spread(Type, O3) %>%
-    mutate(Diff = CAMchem -NOx, Month = month.abb[month]) %>%
+    mutate(Diff = NOx - CAMchem, Month = month.abb[month]) %>%
     dplyr::select(-CAMchem, -NOx)
   return(diff.df)
 }
@@ -38,7 +38,7 @@ yearly.diff <- data.df %>%
   summarise(Diff = mean(Diff))
 yearly.diff
 
-data.df$Month <- factor(data.df$Month, levels = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"))
+# data.df$Month <- factor(data.df$Month, levels = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"))
 
 #sort out world map outline
 world.map <- map_data("world")
@@ -58,8 +58,7 @@ world.map.correct <- rbind(world.map.correct, out.grid)
 p <- ggplot()
 p <- p + geom_raster(data = yearly.diff, aes(x = lon, y = lat, fill = Diff))
 p <- p + geom_path(data = world.map.correct, aes(x = long, y = lat, group = group))
-# p <- p + facet_wrap(~ Month, nrow = 3)
-p <- p + scale_fill_gradient2(low = muted("Blue"), mid = "White", high = muted("Red"), name = "CAMchem - NOx.Tagging (ppbv)") #, limits = c(-30, 30), breaks = seq(-30, 30, by = 5))
+p <- p + scale_fill_gradient2(low = muted("Blue"), mid = "White", high = muted("Red"), name = "NOx.Tagging - CAMchem (ppbv)")
 p <- p + plot_theme()
 p <- p + scale_y_continuous(expand = c(0, 0))
 p <- p + scale_x_continuous(expand = c(0, 0))

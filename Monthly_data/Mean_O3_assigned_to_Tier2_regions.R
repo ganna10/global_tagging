@@ -229,5 +229,5 @@ plotting <- function (region, data.frame) {
   dev.off()
 }
 
-emission.regions <- c("SAS", "NAM", "EUR", "EAS", "MDE", "RBU") #, "OCN", "Rest")
+emission.regions <- c("SAS", "NAM", "EUR", "EAS", "MDE", "RBU", "OCN", "Rest")
 lapply(emission.regions, plotting, data.frame = zonal.mean)

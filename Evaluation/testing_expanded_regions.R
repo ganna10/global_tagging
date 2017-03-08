@@ -42,7 +42,7 @@ get.data <- function (name, month) {
   return(data.df)
 }
 
-months <- seq(1, 6, by = 1)
+months <- seq(1, 8, by = 1)
 types <- c("Old", "New")
 all.data <- NULL
 

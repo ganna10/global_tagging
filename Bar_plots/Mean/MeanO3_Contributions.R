@@ -1,4 +1,4 @@
-setwd("~/Documents//Analysis//2016_HTAP//Annual_Seasonal_Data/")
+setwd("~/Documents//Analysis//2016_HTAP//Bar_plots//Mean")
 
 get.data <- function (month) {
   month.text <- month.abb[month]
@@ -107,14 +107,14 @@ write.csv(annual.data, file = "Mean_Annual_Percent_Contributions.csv", row.names
 
 #### calculate mean seasonal percentage contribution
 get.season <- function (month) {
-  if (month %in% c("Dec", "Jan", "Feb")) {
-    season = "DJF"
-  } else if (month %in% c("Apr", "Mar", "May")) {
-    season = "MAM"
-  } else if (month %in% c("Jul", "Jun", "Aug")) {
-    season = "JJA"
-  } else if (month %in% c("Oct", "Sep", "Nov")) {
-    season = "SON"
+  if (month %in% c("Jan", "Feb", "Mar")) {
+    season = "JFM"
+  } else if (month %in% c("Apr", "May", "Jun")) {
+    season = "AMJ"
+  } else if (month %in% c("Jul", "Aug", "Sep")) {
+    season = "JUS"
+  } else if (month %in% c("Oct", "Nov", "Dec")) {
+    season = "OND"
   }
   return (season)
 }
@@ -123,13 +123,12 @@ seasonal.data <- with.sources %>%
   filter(Source != "Total") %>%
   rowwise() %>%
   mutate(Season = get.season(Month)) %>%
-  spread(Source, Zonal.Mean) %>%
-  mutate(Total = North.America + Europe + South.Asia + East.Asia + Middle.East + Russia + Rest + Ocean + Stratosphere + Other) %>%
-  gather(Source, Zonal.Mean, -Region, -Season, -Total) %>%
-  mutate(Percent.Contribution = Zonal.Mean * 100 / Total) %>%
+  group_by(Season, Region, Source) %>%
+  summarise(Zonal.Mean = mean(Zonal.Mean)) %>%
+  mutate(Total = sum(Zonal.Mean), Percent.Contribution = Zonal.Mean * 100 / Total) %>%
   dplyr::select(Season, Receptor.Region = Region, Source, Percent.Contribution, -Total) %>%
   spread(Source, Percent.Contribution)
-seasonal.data$Season <- factor(seasonal.data$Season, levels = c("DJF", "MAM", "JJA", "SON"))
+seasonal.data$Season <- factor(seasonal.data$Season, levels = c("JFM", "AMJ", "JUS", "OND"))
 
 write.csv(seasonal.data %>% arrange(Season), file = "Mean_Seasonal_Percent_Contributions.csv", row.names = FALSE, quote = FALSE)
 

@@ -290,6 +290,7 @@ contribs.plotting <- function (data.frame, region) {
     df <- data.frame %>% filter(str_detect(Region, "Ocean") | str_detect(Region, " Sea") | str_detect(Region, " Bay") | str_detect(Region, "Atlantic") | str_detect(Region, "Pacific"))
   } else if (region == "Rest") {
     df <- data.frame %>% filter(Region == "Rest")
+  } else{
     stop("No region")
   }
 
